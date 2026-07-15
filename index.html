@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- PENGATURAN TITLE TAB BROWSER BARU -->
+    <title>AnimeOvertime - Disaat Kamu Mau Nonton Anime Tapi Malah Disuruh Overtime</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <style>
+        body { background-color: #0b0f19; color: #e5e7eb; }
+        .custom-scroll::-webkit-scrollbar { width: 6px; }
+        .custom-scroll::-webkit-scrollbar-track { background: #1f2937; border-radius: 4px; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #4f46e5; border-radius: 4px; }
+        
+        /* Gaya Khusus Switch Toggle Button */
+        .toggle-dot { transition: transform 0.2s ease-in-out; }
+        input:checked ~ .toggle-bg { background-color: #4f46e5; }
+        input:checked ~ .toggle-dot { transform: translateX(100%); }
+    </style>
+</head>
+<body class="font-sans antialiased">
+
+    <!-- NAVBAR -->
+    <nav class="bg-gray-900 border-b border-gray-800 sticky top-0 z-40 px-6 py-4 flex flex-col xl:flex-row items-center justify-between gap-4">
+        <!-- TITLE DI HALAMAN UTAMA (LOGO TEXT BARU) -->
+        <div class="flex flex-col">
+            <a href="#" onclick="initSeasonal()" class="text-2xl font-black text-indigo-500 tracking-wider leading-none">ANIME<span class="text-white">OVERTIME</span></a>
+            <span class="text-[10px] text-gray-500 font-medium mt-1 tracking-wide hidden sm:inline">Disaat Kamu Mau Nonton Anime Tapi Malah Disuruh Overtime</span>
+        </div>
+        
+        <!-- FILTER ACTIONS -->
+        <div class="flex flex-wrap items-center gap-3 w-full xl:w-auto justify-end">
+            <select id="seasonSelect" onchange="applyFilters()" class="bg-gray-800 text-white px-3 py-2 rounded-lg border border-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm cursor-pointer">
+                <option value="WINTER">Winter</option>
+                <option value="SPRING">Spring</option>
+                <option value="SUMMER">Summer</option>
+                <option value="FALL">Fall</option>
+            </select>
+            
+            <select id="yearSelect" onchange="applyFilters()" class="bg-gray-800 text-white px-3 py-2 rounded-lg border border-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm cursor-pointer"></select>
+            
+            <select id="sortSelect" onchange="applyFilters()" class="bg-gray-800 text-white px-3 py-2 rounded-lg border border-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm cursor-pointer">
+                <option value="POPULARITY_DESC">Paling Populer</option>
+                <option value="SCORE_DESC">Skor Tertinggi</option>
+                <option value="AIRING_AT">Jadwal Tayang Terdekat ⏱️</option>
+            </select>
+
+            <button onclick="toggleSettingsMenu()" class="bg-gray-800 hover:bg-gray-700 text-white p-2 rounded-lg border border-gray-700 transition text-sm">⚙️</button>
+
+            <!-- AUTH BUTTON CONTAINER -->
+            <div id="authNavContainer" class="border-l border-gray-800 pl-3 flex items-center gap-2"></div>
+        </div>
+    </nav>
+
+    <!-- TOAST NOTIFICATION -->
+    <div id="toastContainer" class="fixed bottom-6 right-6 z-70 flex flex-col gap-3 max-w-sm w-full pointer-events-none"></div>
+
+    <!-- SETTINGS PANEL -->
+    <div id="settingsPanel" class="fixed top-20 right-6 bg-gray-900 border border-gray-800 shadow-2xl rounded-xl p-4 w-72 hidden z-50">
+        <h4 class="font-bold text-gray-200 mb-3 border-b border-gray-800 pb-2 flex justify-between items-center">
+            <span>Opsi Tampilan</span>
+            <button onclick="toggleSettingsMenu()" class="text-gray-500 hover:text-white">&times;</button>
+        </h4>
+        <label class="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Bahasa Judul</label>
+        <div class="space-y-2">
+            <label class="flex items-center gap-3 cursor-pointer text-sm">
+                <input type="radio" name="titlePref" value="english" class="accent-indigo-500 h-4 w-4" onchange="changeTitlePreference('english')">
+                <span>English</span>
+            </label>
+            <label class="flex items-center gap-3 cursor-pointer text-sm">
+                <input type="radio" name="titlePref" value="romaji" class="accent-indigo-500 h-4 w-4" onchange="changeTitlePreference('romaji')">
+                <span>Romaji</span>
+            </label>
+        </div>
+    </div>
+
+    <!-- MODAL AUTH -->
+    <div id="authModal" onclick="handleOutsideClick(event, 'authModal')" class="fixed inset-0 bg-black/85 hidden z-60 items-center justify-center p-4 backdrop-blur-sm">
+        <div onclick="event.stopPropagation()" class="bg-gray-900 border border-gray-800 rounded-xl p-6 w-full max-w-md relative shadow-2xl">
+            <button onclick="closeAuthModal()" class="absolute top-3 right-3 text-gray-400 hover:text-white text-xl">&times;</button>
+            <h3 id="authModalTitle" class="text-xl font-bold text-white mb-4">Masuk Akun</h3>
+            
+            <form id="authForm" onsubmit="handleAuthSubmit(event)" class="space-y-4">
+                <!-- USERNAME FIELD -->
+                <div>
+                    <div class="flex justify-between items-center mb-1">
+                        <label class="block text-xs font-semibold text-gray-400 uppercase tracking-wider">Username</label>
+                        <div id="toggleUserContainer" class="flex items-center gap-1.5">
+                            <span class="text-[10px] text-gray-500 font-medium">Simpan</span>
+                            <label class="relative inline-flex items-center cursor-pointer select-none">
+                                <input type="checkbox" id="toggleSaveUser" class="sr-only">
+                                <div class="w-7 h-4 bg-gray-700 rounded-full toggle-bg border border-gray-600"></div>
+                                <div class="absolute left-0.5 top-0.5 bg-white w-3 h-3 rounded-full toggle-dot shadow-sm"></div>
+                            </label>
+                        </div>
+                    </div>
+                    <input type="text" id="authUsername" required class="w-full bg-gray-800 text-white px-3 py-2 rounded-lg border border-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm">
+                </div>
+
+                <!-- PASSWORD FIELD -->
+                <div>
+                    <div class="flex justify-between items-center mb-1">
+                        <label class="block text-xs font-semibold text-gray-400 uppercase tracking-wider">Password</label>
+                        <div id="togglePassContainer" class="flex items-center gap-1.5">
+                            <span class="text-[10px] text-gray-500 font-medium">Simpan</span>
+                            <label class="relative inline-flex items-center cursor-pointer select-none">
+                                <input type="checkbox" id="toggleSavePass" class="sr-only">
+                                <div class="w-7 h-4 bg-gray-700 rounded-full toggle-bg border border-gray-600"></div>
+                                <div class="absolute left-0.5 top-0.5 bg-white w-3 h-3 rounded-full toggle-dot shadow-sm"></div>
+                            </label>
+                        </div>
+                    </div>
+                    <input type="password" id="authPassword" required class="w-full bg-gray-800 text-white px-3 py-2 rounded-lg border border-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm">
+                </div>
+
+                <button type="submit" id="authSubmitBtn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 rounded-lg transition text-sm cursor-pointer mt-2">Masuk</button>
+            </form>
+            <p class="text-xs text-gray-400 mt-4 text-center">
+                <span id="authSwitchText">Belum punya akun?</span>
+                <button onclick="switchAuthMode()" id="authSwitchBtn" class="text-indigo-400 hover:underline font-semibold ml-1 cursor-pointer">Daftar Sekarang</button>
+            </p>
+        </div>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <main class="max-w-7xl mx-auto px-6 py-8">
+        <!-- WATCHLIST SECTION -->
+        <div id="watchlistSection" class="mb-10 hidden">
+            <h2 class="text-2xl font-bold mb-6 border-l-4 border-emerald-500 pl-3 flex items-center gap-2">
+                Watchlist Saya <span class="text-xs bg-emerald-950 text-emerald-400 border border-emerald-900 px-2 py-0.5 rounded-full font-normal" id="watchlistCount">0</span>
+            </h2>
+            <div id="watchlistGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6 bg-gray-900/30 p-4 rounded-xl border border-gray-800/50"></div>
+            <hr class="border-gray-800 mt-10">
+        </div>
+
+        <!-- SECTION DAFTAR MUSIM -->
+        <h2 id="sectionTitle" class="text-2xl font-bold mb-6 border-l-4 border-indigo-500 pl-3">Memuat Data...</h2>
+        
+        <!-- LOADING SCREEN -->
+        <div id="loading" class="flex flex-col items-center justify-center py-20 gap-3">
+            <div class="w-10 h-10 border-4 border-indigo-500/20 border-t-indigo-500 rounded-full animate-spin"></div>
+            <div class="text-sm text-gray-400 font-medium tracking-wide">Memuat database..</div>
+        </div>
+
+        <div id="animeGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6"></div>
+    </main>
+
+    <!-- MODAL DETAIL -->
+    <div id="animeModal" onclick="handleOutsideClick(event, 'animeModal')" class="fixed inset-0 bg-black/80 hidden z-50 items-center justify-center p-4 backdrop-blur-sm">
+        <div onclick="event.stopPropagation()" class="bg-gray-900 border border-gray-800 rounded-xl max-w-2xl w-full overflow-hidden relative flex flex-col md:flex-row max-h-[90vh] overflow-y-auto md:overflow-visible shadow-2xl">
+            <button onclick="closeModal()" class="absolute top-3 right-3 bg-gray-800 text-white w-8 h-8 rounded-full flex items-center justify-center hover:bg-gray-700 z-20 shadow-md">&times;</button>
+            
+            <img id="modalImg" class="w-full md:w-56 h-auto object-cover bg-gray-900" src="" alt="Poster">
+            
+            <div class="p-6 flex flex-col justify-between flex-1 min-w-0">
+                <div class="overflow-y-auto custom-scroll pr-1 flex-1">
+                    <div class="flex flex-col sm:flex-row justify-between items-start gap-3 mb-2 pr-12">
+                        <h3 id="modalTitle" class="text-2xl font-bold text-white tracking-tight leading-tight"></h3>
+                        <button id="modalWatchlistBtn" class="shrink-0 text-xs px-3 py-1.5 rounded-lg border font-semibold transition shadow-sm cursor-pointer whitespace-nowrap"></button>
+                    </div>
+                    <h4 id="modalSubTitle" class="text-sm text-gray-500 mb-3 italic"></h4>
+                    
+                    <div class="flex flex-wrap gap-3 text-sm text-gray-400 mb-4">
+                        <span id="modalRating" class="text-yellow-400 font-semibold"></span>
+                        <span id="modalType"></span>
+                        <span id="modalEpisodes"></span>
+                        <span id="modalStatus" class="px-2 py-0.5 rounded text-xs font-bold"></span>
+                    </div>
+
+                    <!-- CARD JADWAL & COUNTDOWN -->
+                    <div id="airingScheduleCard" class="bg-indigo-950/40 border border-indigo-900/50 rounded-lg p-3 mb-4 hidden">
+                        <div class="text-xs text-indigo-400 font-bold uppercase tracking-wide">Jadwal Tayang Episode Berikutnya</div>
+                        <div id="airingTimeInfo" class="text-sm text-gray-200 font-semibold mt-1"></div>
+                        <div id="airingCountdown" class="text-xs text-amber-400 font-medium mt-1"></div>
+                    </div>
+
+                    <!-- EPISODE TRACKER -->
+                    <div class="mb-4">
+                        <div class="text-xs text-indigo-400 font-bold uppercase tracking-wide mb-2">Daftar Episode & Progress Nonton</div>
+                        <div id="episodeTrackerContainer" class="grid grid-cols-4 sm:grid-cols-6 gap-2 max-h-40 overflow-y-auto p-2 bg-gray-950/50 rounded-lg border border-gray-800 custom-scroll"></div>
+                    </div>
+
+                    <div id="modalGenres" class="flex flex-wrap gap-1.5 mb-4"></div>
+                    <p id="modalSynopsis" class="text-gray-300 text-sm leading-relaxed mb-4 max-h-32 overflow-y-auto custom-scroll pr-2"></p>
+                </div>
+                <div class="mt-4 pt-4 border-t border-gray-800">
+                    <a id="watchBtn" target="_blank" class="block w-full text-center bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded-lg transition text-sm shadow-lg shadow-red-600/20">
+                        Tonton Trailer Resmi di YouTube
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JAVASCRIPT & STATE MANAGEMENT -->
+    <script>
+        const ANILIST_URL = 'https://graphql.anilist.co';
+        const animeGrid = document.getElementById('animeGrid');
+        const watchlistGrid = document.getElementById('watchlistGrid');
+        const watchlistSection = document.getElementById('watchlistSection');
+        const sectionTitle = document.getElementById('sectionTitle');
+        const loading = document.getElementById('loading');
+        const seasonSelect = document.getElementById('seasonSelect');
+        const yearSelect = document.getElementById('yearSelect');
+        const sortSelect = document.getElementById('sortSelect');
+        const settingsPanel = document.getElementById('settingsPanel');
+
+        let currentAnimeData = [];
+        let allFetchedAnimeMap = new Map();
+        let currentTitlePref = localStorage.getItem('animeTitlePref') || 'english';
+        let currentUser = JSON.parse(localStorage.getItem('currentAnimeUser')) || null;
+        let authMode = 'login';
+        let selectedAnimeId = null;
+        let countdownInterval = null;
+
+        const seasonalAnimeQuery = `
+        query ($season: MediaSeason, $seasonYear: Int, $sort: [MediaSort]) {
+            Page(page: 1, perPage: 30) {
+                media(season: $season, seasonYear: $seasonYear, type: ANIME, sort: $sort) {
+                    id
+                    title { romaji english }
+                    coverImage { large }
+                    averageScore
+                    format
+                    episodes
+                    status
+                    genres
+                    description
+                    trailer { id site }
+                    nextAiringEpisode { airingAt timeUntilAiring episode }
+                }
+            }
+        }`;
+
+        window.onload = () => {
+            generateYearOptions();
+            initSettingsUI();
+            updateAuthNavbar();
+            checkSavedAccount();
+            initSeasonal();
+        };
+
+        // --- SISTEM TOAST ENGINE ---
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = `pointer-events-auto flex items-center p-4 bg-gray-900 border text-sm rounded-xl shadow-2xl transform transition duration-300 translate-y-2 opacity-0 border-gray-800`;
+            const icon = type === 'success' ? '🟢' : type === 'error' ? '🔴' : '🔵';
+            toast.innerHTML = `<span class="mr-3 text-base">${icon}</span><div class="font-medium text-gray-200">${message}</div>`;
+            container.appendChild(toast);
+            setTimeout(() => toast.classList.remove('translate-y-2', 'opacity-0'), 10);
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'translate-y-1');
+                setTimeout(() => toast.remove(), 300);
+            }, 3500);
+        }
+
+        // --- MANAJEMEN PENGATURAN INDIVIDUAL TOGGLE SAVE ACCOUNT ---
+        function checkSavedAccount() {
+            const savedUser = localStorage.getItem('savedAnimeUsername');
+            const savedPass = localStorage.getItem('savedAnimePassword');
+            
+            if (savedUser) {
+                document.getElementById('authUsername').value = savedUser;
+                document.getElementById('toggleSaveUser').checked = true;
+            }
+            if (savedPass) {
+                document.getElementById('authPassword').value = savedPass;
+                document.getElementById('toggleSavePass').checked = true;
+            }
+        }
+
+        function handleOutsideClick(event, modalId) {
+            if (modalId === 'animeModal') closeModal();
+            else if (modalId === 'authModal') closeAuthModal();
+        }
+
+        function updateAuthNavbar() {
+            const container = document.getElementById('authNavContainer');
+            if (currentUser) {
+                container.innerHTML = `
+                    <span class="text-xs text-gray-400 mr-1">Halo, <b class="text-indigo-400">${currentUser}</b></span>
+                    <button onclick="handleLogout()" class="bg-red-950/50 hover:bg-red-900 border border-red-900/50 text-red-400 text-xs px-2.5 py-1.5 rounded-lg transition font-medium cursor-pointer">Keluar</button>
+                `;
+            } else {
+                container.innerHTML = `
+                    <button onclick="openAuthModal('login')" class="bg-gray-800 hover:bg-gray-700 text-white text-xs px-3 py-1.5 rounded-lg transition font-medium border border-gray-700 cursor-pointer">Masuk</button>
+                `;
+            }
+            renderWatchlistUI();
+        }
+
+        function openAuthModal(mode) {
+            authMode = mode;
+            document.getElementById('authModal').classList.remove('hidden');
+            document.getElementById('authModal').classList.add('flex');
+            switchAuthMode(mode);
+        }
+
+        function closeAuthModal() {
+            document.getElementById('authModal').classList.remove('flex');
+            document.getElementById('authModal').classList.add('hidden');
+        }
+
+        function switchAuthMode(targetMode) {
+            if (targetMode) authMode = targetMode;
+            else authMode = authMode === 'login' ? 'register' : 'login';
+
+            const title = document.getElementById('authModalTitle');
+            const submitBtn = document.getElementById('authSubmitBtn');
+            const switchText = document.getElementById('authSwitchText');
+            const switchBtn = document.getElementById('authSwitchBtn');
+            
+            const toggleUser = document.getElementById('toggleUserContainer');
+            const togglePass = document.getElementById('togglePassContainer');
+
+            if (authMode === 'login') {
+                title.innerText = "Masuk Akun"; submitBtn.innerText = "Masuk";
+                switchText.innerText = "Belum punya akun?"; switchBtn.innerText = "Daftar Sekarang";
+                toggleUser.classList.remove('hidden');
+                togglePass.classList.remove('hidden');
+                checkSavedAccount();
+            } else {
+                title.innerText = "Daftar Akun Baru"; submitBtn.innerText = "Buat Akun";
+                switchText.innerText = "Sudah punya akun?"; switchBtn.innerText = "Masuk di sini";
+                toggleUser.classList.add('hidden');
+                togglePass.classList.add('hidden');
+            }
+        }
+
+        function handleAuthSubmit(e) {
+            e.preventDefault();
+            const user = document.getElementById('authUsername').value.trim();
+            const pass = document.getElementById('authPassword').value;
+            
+            const saveUserChecked = document.getElementById('toggleSaveUser').checked;
+            const savePassChecked = document.getElementById('toggleSavePass').checked;
+            
+            let db = JSON.parse(localStorage.getItem('animeUsersDB')) || {};
+
+            if (authMode === 'register') {
+                if (db[user]) { showToast("Username sudah terpakai!", "error"); return; }
+                db[user] = { password: pass, watched: {}, watchlist: {} };
+                localStorage.setItem('animeUsersDB', JSON.stringify(db));
+                showToast("Registrasi berhasil! Silakan masuk.");
+                switchAuthMode('login');
+            } else {
+                if (!db[user] || db[user].password !== pass) { showToast("Username atau password salah!", "error"); return; }
+                
+                if (saveUserChecked) localStorage.setItem('savedAnimeUsername', user);
+                else localStorage.removeItem('savedAnimeUsername');
+
+                if (savePassChecked) localStorage.setItem('savedAnimePassword', pass);
+                else localStorage.removeItem('savedAnimePassword');
+
+                currentUser = user;
+                localStorage.setItem('currentAnimeUser', JSON.stringify(user));
+                updateAuthNavbar();
+                closeAuthModal();
+                showToast(`Selamat datang kembali, ${user}!`, "success");
+                const activeAnime = allFetchedAnimeMap.get(selectedAnimeId);
+                if (activeAnime) openModal(activeAnime);
+            }
+        }
+
+        function handleLogout() {
+            showToast(`Sampai jumpa, ${currentUser}!`, "info");
+            currentUser = null;
+            localStorage.removeItem('currentAnimeUser');
+            updateAuthNavbar();
+            const activeAnime = allFetchedAnimeMap.get(selectedAnimeId);
+            if (activeAnime) openModal(activeAnime);
+        }
+
+        function getWatchlistKey() { return `${seasonSelect.value}-${yearSelect.value}`; }
+
+        function renderWatchlistUI() {
+            watchlistGrid.innerHTML = '';
+            if (!currentUser) { watchlistSection.classList.add('hidden'); return; }
+
+            const db = JSON.parse(localStorage.getItem('animeUsersDB')) || {};
+            const userWatchlist = db[currentUser]?.watchlist?.[getWatchlistKey()] || [];
+
+            if (userWatchlist.length === 0) { watchlistSection.classList.add('hidden'); return; }
+
+            watchlistSection.classList.remove('hidden');
+            document.getElementById('watchlistCount').innerText = userWatchlist.length;
+
+            userWatchlist.forEach(animeId => {
+                const anime = allFetchedAnimeMap.get(animeId);
+                if (!anime) return;
+
+                const card = document.createElement('div');
+                card.className = "bg-gray-900 border border-emerald-950 rounded-xl overflow-hidden hover:border-emerald-500 transition duration-300 cursor-pointer group flex flex-col justify-between shadow-lg";
+                const score = anime.averageScore ? `⭐ ${anime.averageScore}%` : '⭐ N/A';
+                const title = getAnimeTitle(anime);
+
+                card.innerHTML = `
+                    <div class="relative overflow-hidden aspect-[3/4]">
+                        <img class="w-full h-full object-cover group-hover:scale-105 transition duration-300" src="${anime.coverImage.large}" alt="${title}" loading="lazy">
+                        <div class="absolute top-2 left-2 bg-emerald-950/90 text-emerald-400 px-2 py-0.5 rounded text-[10px] font-black border border-emerald-800">Watchlist</div>
+                        <div class="absolute bottom-2 left-2 bg-black/70 px-2 py-0.5 rounded text-xs text-yellow-400 font-bold">${score}</div>
+                    </div>
+                    <div class="p-4 flex-1 flex flex-col justify-between">
+                        <h4 class="font-bold text-sm text-gray-200 line-clamp-2 group-hover:text-emerald-400 transition">${title}</h4>
+                        <p class="text-xs text-gray-500 mt-1">${anime.format || 'TV'} (${anime.episodes || '?'} Eps)</p>
+                    </div>
+                `;
+                card.onclick = () => openModal(anime);
+                watchlistGrid.appendChild(card);
+            });
+        }
+
+        function toggleWatchlist(anime) {
+            if (!currentUser) { openAuthModal('login'); return; }
+
+            let db = JSON.parse(localStorage.getItem('animeUsersDB')) || {};
+            if (!db[currentUser].watchlist) db[currentUser].watchlist = {};
+            const key = getWatchlistKey();
+            if (!db[currentUser].watchlist[key]) db[currentUser].watchlist[key] = [];
+
+            let list = db[currentUser].watchlist[key];
+            const index = list.indexOf(anime.id);
+
+            if (index > -1) { list.splice(index, 1); showToast("Dihapus dari Watchlist"); }
+            else { list.push(anime.id); showToast("Ditambahkan ke Watchlist"); }
+
+            db[currentUser].watchlist[key] = list;
+            localStorage.setItem('animeUsersDB', JSON.stringify(db));
+            updateWatchlistBtnStyle(anime);
+            renderWatchlistUI();
+        }
+
+        function renderEpisodeTracker(anime) {
+            const container = document.getElementById('episodeTrackerContainer');
+            container.innerHTML = '';
+            const totalEpisodes = anime.episodes || 12;
+            let userWatchedData = {};
+            if (currentUser) {
+                const db = JSON.parse(localStorage.getItem('animeUsersDB')) || {};
+                userWatchedData = db[currentUser]?.watched?.[anime.id] || {};
+            }
+
+            for (let i = 1; i <= totalEpisodes; i++) {
+                const btn = document.createElement('button');
+                const isWatched = userWatchedData[i] === true;
+                btn.innerText = `Eps ${i}`;
+                
+                if (isWatched && currentUser) btn.className = "bg-green-600 hover:bg-green-700 text-white text-xs font-bold py-2 rounded border border-green-500 shadow-md transition cursor-pointer";
+                else btn.className = "bg-gray-800 hover:bg-gray-700 text-gray-300 text-xs py-2 rounded border border-gray-700 transition cursor-pointer";
+
+                btn.onclick = () => {
+                    if (!currentUser) { openAuthModal('login'); return; }
+                    toggleEpisodeWatched(anime.id, i, isWatched, anime);
+                };
+                container.appendChild(btn);
+            }
+        }
+
+        function toggleEpisodeWatched(animeId, episodeNum, currentStatus, anime) {
+            let db = JSON.parse(localStorage.getItem('animeUsersDB')) || {};
+            if (!db[currentUser].watched[animeId]) db[currentUser].watched[animeId] = {};
+            db[currentUser].watched[animeId][episodeNum] = !currentStatus;
+            localStorage.setItem('animeUsersDB', JSON.stringify(db));
+            
+            if(!currentStatus) showToast(`Tandai Episode ${episodeNum} ditonton`);
+            else showToast(`Batal tandai Episode ${episodeNum}`);
+            renderEpisodeTracker(anime);
+        }
+
+        function updateWatchlistBtnStyle(anime) {
+            const btn = document.getElementById('modalWatchlistBtn');
+            if (!currentUser) {
+                btn.innerText = "+ Watchlist";
+                btn.className = "shrink-0 text-xs bg-gray-800 hover:bg-gray-700 text-gray-300 px-3 py-1.5 rounded-lg border border-gray-700 font-semibold cursor-pointer";
+                return;
+            }
+            const db = JSON.parse(localStorage.getItem('animeUsersDB')) || {};
+            const list = db[currentUser]?.watchlist?.[getWatchlistKey()] || [];
+            if (list.includes(anime.id)) {
+                btn.innerHTML = "✓ Saved";
+                btn.className = "shrink-0 text-xs bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-lg border border-emerald-500 font-bold cursor-pointer shadow-md";
+            } else {
+                btn.innerText = "+ Watchlist";
+                btn.className = "shrink-0 text-xs bg-gray-850 hover:bg-gray-800 text-gray-300 px-3 py-1.5 rounded-lg border border-gray-700 font-semibold cursor-pointer";
+            }
+        }
+
+        function startCountdown(airingAt, timeUntilAiring, episode) {
+            if (countdownInterval) clearInterval(countdownInterval);
+            const scheduleCard = document.getElementById('airingScheduleCard');
+            const timeInfo = document.getElementById('airingTimeInfo');
+            const countdownText = document.getElementById('airingCountdown');
+
+            const date = new Date(airingAt * 1000);
+            const opsiHari = { weekday: 'long', hour: '2-digit', minute: '2-digit', timeZoneName: 'short' };
+            timeInfo.innerText = `Eps ${episode}: ${date.toLocaleDateString('id-ID', opsiHari)}`;
+            scheduleCard.classList.remove('hidden');
+
+            let sisaDetik = timeUntilAiring;
+            function updateTimer() {
+                if (sisaDetik <= 0) {
+                    countdownText.innerText = "⏳ Sedang tayang / Baru saja rilis!";
+                    clearInterval(countdownInterval); return;
+                }
+                const hari = Math.floor(sisaDetik / (3600 * 24));
+                const jam = Math.floor((sisaDetik % (3600 * 24)) / 3600);
+                const menit = Math.floor((sisaDetik % 3600) / 60);
+                const detik = sisaDetik % 60;
+                countdownText.innerText = `⏱️ Rilis dalam: ${hari}h ${jam}j ${menit}m ${detik}s`;
+                sisaDetik--;
+            }
+            updateTimer(); countdownInterval = setInterval(updateTimer, 1000);
+        }
+
+        function initSettingsUI() {
+            const radio = document.querySelector(`input[name="titlePref"][value="${currentTitlePref}"]`);
+            if (radio) radio.checked = true;
+        }
+        function toggleSettingsMenu() { settingsPanel.classList.toggle('hidden'); }
+        function changeTitlePreference(pref) {
+            currentTitlePref = pref; localStorage.setItem('animeTitlePref', pref);
+            displayAnime(currentAnimeData); renderWatchlistUI();
+        }
+        
+        function generateYearOptions() {
+            const currentYear = new Date().getFullYear();
+            yearSelect.innerHTML = '';
+            for (let i = currentYear + 1; i >= currentYear - 5; i--) {
+                const option = document.createElement('option');
+                option.value = i; option.innerText = i;
+                if (i === currentYear) option.selected = true;
+                yearSelect.appendChild(option);
+            }
+        }
+        
+        function initSeasonal() {
+            const currentMonth = new Date().getMonth(); const currentYear = new Date().getFullYear();
+            let currentSeason = 'WINTER';
+            if (currentMonth >= 2 && currentMonth <= 4) currentSeason = 'SPRING';
+            else if (currentMonth >= 5 && currentMonth <= 7) currentSeason = 'SUMMER';
+            else if (currentMonth >= 8 && currentMonth <= 10) currentSeason = 'FALL';
+            seasonSelect.value = currentSeason; yearSelect.value = currentYear; sortSelect.value = 'AIRING_AT';
+            loadSeasonalData(currentSeason, currentYear, 'AIRING_AT');
+        }
+
+        function applyFilters() { loadSeasonalData(seasonSelect.value, parseInt(yearSelect.value), sortSelect.value); }
+        function loadSeasonalData(season, year, sortBy) {
+            const readableSeason = seasonSelect.options[seasonSelect.selectedIndex].text.split(' ')[0];
+            const readableSort = sortSelect.options[sortSelect.selectedIndex].text;
+            sectionTitle.innerText = `Anime Musim: ${readableSeason} ${year} (${readableSort})`;
+            fetchAniList(seasonalAnimeQuery, { season: season, seasonYear: year, sort: [sortBy] });
+        }
+
+        async function fetchAniList(query, variables) {
+            loading.classList.remove('hidden'); loading.classList.add('flex');
+            animeGrid.innerHTML = '';
+            let isAiringSort = false;
+            if (variables.sort && variables.sort[0] === 'AIRING_AT') {
+                variables.sort = ['POPULARITY_DESC']; isAiringSort = true;
+            }
+            try {
+                const response = await fetch(ANILIST_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                    body: JSON.stringify({ query: query, variables: variables })
+                });
+                const result = await response.json();
+                currentAnimeData = result.data.Page.media;
+                currentAnimeData.forEach(anime => allFetchedAnimeMap.set(anime.id, anime));
+
+                if (isAiringSort) {
+                    currentAnimeData.sort((a, b) => {
+                        const timeA = a.nextAiringEpisode ? a.nextAiringEpisode.timeUntilAiring : Infinity;
+                        const timeB = b.nextAiringEpisode ? b.nextAiringEpisode.timeUntilAiring : Infinity;
+                        return timeA - timeB;
+                    });
+                }
+                displayAnime(currentAnimeData); renderWatchlistUI();
+            } catch (error) {
+                console.error(error);
+                animeGrid.innerHTML = `<p class="text-red-500 col-span-full text-center">Gagal memuat data.</p>`;
+            } finally { loading.classList.remove('flex'); loading.classList.add('hidden'); }
+        }
+        function getAnimeTitle(anime) { return currentTitlePref === 'english' ? (anime.title.english || anime.title.romaji) : (anime.title.romaji || anime.title.english); }
+
+        // --- MANAJEMEN FIX: PERBAIKAN TIMEOUT CRASH ---
+        function displayAnime(animeList) {
+            animeGrid.innerHTML = ''; if (!animeList || animeList.length === 0) return;
+            animeList.forEach(anime => {
+                const card = document.createElement('div');
+                card.className = "bg-gray-900 border border-gray-800 rounded-xl overflow-hidden hover:border-indigo-500 transition duration-300 cursor-pointer group flex flex-col justify-between";
+                const score = anime.averageScore ? `⭐ ${anime.averageScore}%` : '⭐ N/A';
+                const title = getAnimeTitle(anime);
+                const airingBadge = anime.nextAiringEpisode ? `<div class="absolute bottom-2 right-2 bg-indigo-600 text-white px-2 py-0.5 rounded text-[10px] font-black tracking-wide">EPS ${anime.nextAiringEpisode.episode}</div>` : '';
+                card.innerHTML = `
+                    <div class="relative overflow-hidden aspect-[3/4]">
+                        <img class="w-full h-full object-cover group-hover:scale-105 transition duration-300" src="${anime.coverImage.large}" alt="${title}" loading="lazy">
+                        <div class="absolute top-2 left-2 bg-black/70 px-2 py-0.5 rounded text-xs text-yellow-400 font-bold">${score}</div>
+                        ${airingBadge}
+                    </div>
+                    <div class="p-4 flex-1 flex flex-col justify-between">
+                        <h4 class="font-bold text-sm text-gray-200 line-clamp-2 group-hover:text-indigo-400 transition">${title}</h4>
+                        <p class="text-xs text-gray-500 mt-1">${anime.format || 'TV'} (${anime.episodes || '?'} Eps)</p>
+                    </div>
+                `;
+                card.onclick = () => openModal(anime); animeGrid.appendChild(card);
+            });
+        }
+
+        function openModal(anime) {
+            selectedAnimeId = anime.id; const mainTitle = getAnimeTitle(anime);
+            document.getElementById('modalTitle').innerText = mainTitle;
+            document.getElementById('modalSubTitle').innerText = anime.title.romaji !== mainTitle ? anime.title.romaji : '';
+            document.getElementById('modalImg').src = anime.coverImage.large;
+            document.getElementById('modalRating').innerText = anime.averageScore ? `⭐ ${anime.averageScore}%` : '⭐ N/A';
+            document.getElementById('modalType').innerText = `📺 ${anime.format || 'TV'}`;
+            document.getElementById('modalEpisodes').innerText = `⏳ ${anime.episodes || '?'} Episode`;
+            
+            updateWatchlistBtnStyle(anime);
+            document.getElementById('modalWatchlistBtn').onclick = () => toggleWatchlist(anime);
+            document.getElementById('airingScheduleCard').classList.add('hidden');
+            if (anime.nextAiringEpisode) startCountdown(anime.nextAiringEpisode.airingAt, anime.nextAiringEpisode.timeUntilAiring, anime.nextAiringEpisode.episode);
+
+            renderEpisodeTracker(anime);
+            const statusBadge = document.getElementById('modalStatus');
+            statusBadge.innerText = anime.status;
+            statusBadge.className = `px-2 py-0.5 rounded text-xs font-bold ${anime.status === 'FINISHED' ? 'bg-green-900/50 text-green-400' : 'bg-blue-900/50 text-blue-400'}`;
+
+            const genreContainer = document.getElementById('modalGenres'); genreContainer.innerHTML = '';
+            anime.genres.slice(0, 3).forEach(genre => {
+                genreContainer.innerHTML += `<span class="text-xs bg-indigo-950/60 text-indigo-400 border border-indigo-900/50 px-2 py-0.5 rounded-full">${genre}</span>`;
+            });
+            document.getElementById('modalSynopsis').innerText = anime.description ? anime.description.replace(/<\/?[^>]+(>|$)/g, "") : 'Sinopsis tidak tersedia.';
+            
+            const watchBtn = document.getElementById('watchBtn');
+            if (anime.trailer && anime.trailer.site === 'youtube' && anime.trailer.id) {
+                watchBtn.href = `https://www.youtube.com/watch?v=${anime.trailer.id}`;
+                watchBtn.innerText = "Tonton PV / Trailer Resmi di YouTube";
+            } else {
+                watchBtn.href = `https://www.youtube.com/results?search_query=${encodeURIComponent(mainTitle + ' trailer')}`;
+                watchBtn.innerText = "Cari Trailer di YouTube";
+            }
+            const modal = document.getElementById('animeModal'); modal.classList.remove('hidden'); modal.classList.add('flex');
+        }
+
+        function closeModal() {
+            if (countdownInterval) clearInterval(countdownInterval);
+            selectedAnimeId = null; const modal = document.getElementById('animeModal');
+            modal.classList.remove('flex'); modal.classList.add('hidden');
+        }
+    </script>
+</body>
+</html>
