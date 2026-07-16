@@ -1,9 +1,95 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
+	<!-- Firebase App dan Layanan SDK via CDN -->
+	<script type="module">
+	  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+	  import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+	  import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+	  const firebaseConfig = {
+		apiKey: "AIzaSyDPBl2zSSBq2ibHGXdczGU6G4XiFbaYDb0",
+		authDomain: "animeovertime-e33bf.firebaseapp.com",
+		projectId: "animeovertime-e33bf",
+		storageBucket: "animeovertime-e33bf.firebasestorage.app",
+		messagingSenderId: "154401930385",
+		appId: "1:154401930385:web:654f19434020a863f51330",
+		measurementId: "G-2BEP3VLZFB"
+	  };
+
+	  const app = initializeApp(firebaseConfig);
+	  const auth = getAuth(app);
+	  const db = getFirestore(app);
+
+	  // Ekspos layanan Firebase ke window agar bisa diakses script biasa
+	  window.authService = { auth, db, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, doc, setDoc, getDoc };
+
+	  // Hubungkan Auth Firebase langsung ke Variabel Global Window
+	  onAuthStateChanged(auth, async (user) => {
+		  if (user) {
+			  window.firebaseCurrentUserUid = user.uid;
+			  window.currentUser = user.email.split('@')[0]; // Set ke variabel global utama
+			  
+			  // Ambil data dari Firestore Cloud
+			  const docRef = doc(db, "users", user.uid);
+			  const docSnap = await getDoc(docRef);
+			  
+			  if (docSnap.exists()) {
+				  window.allUserCloudData = docSnap.data();
+			  } else {
+				  window.allUserCloudData = { watchlist: {}, watched: {} };
+			  }
+		  } else {
+			  window.firebaseCurrentUserUid = null;
+			  window.currentUser = null; // Reset total jika logout
+			  window.allUserCloudData = { watchlist: {}, watched: {} };
+		  }
+		  
+		  // Pemicu refresh UI setelah Firebase selesai memuat status akun
+		  if (typeof updateAuthNavbar === "function") updateAuthNavbar();
+		  if (typeof renderWatchlistUI === "function") renderWatchlistUI();
+		  
+		  // Jika modal detail sedang terbuka, perbarui tampilan tombol watchlist-nya
+		  if (window.selectedAnimeId && typeof allFetchedAnimeMap !== "undefined") {
+			  const activeAnime = allFetchedAnimeMap.get(window.selectedAnimeId);
+			  if (activeAnime && typeof updateWatchlistBtnStyle === "function") {
+				  updateWatchlistBtnStyle(activeAnime);
+			  }
+		  }
+	  });
+	</script>
+
+	<script>
+		function updateAuthNavbar() {
+			const container = document.getElementById('authNavContainer');
+			if (window.currentUser) { 
+				container.innerHTML = `
+					<span class="text-xs text-gray-400 mr-1">Halo, <b class="text-indigo-400">${window.currentUser}</b></span>
+					<button onclick="handleLogout()" class="bg-red-950/50 hover:bg-red-900 border border-red-900/50 text-red-400 text-xs px-2.5 py-1.5 rounded-lg transition font-medium cursor-pointer">Keluar</button>
+				`;
+			} else {
+				container.innerHTML = `
+					<button onclick="openAuthModal('login')" class="bg-gray-800 hover:bg-gray-700 text-white text-xs px-3 py-1.5 rounded-lg transition font-medium border border-gray-700 cursor-pointer">Masuk</button>
+				`;
+			}
+		}
+
+		async function handleLogout() {
+			if (window.currentUser) {
+				showToast(`Sampai jumpa, ${window.currentUser}!`, "info");
+			}
+			
+			const { auth, signOut } = window.authService;
+			try {
+				await signOut(auth); 
+				closeModal(); 
+			} catch (error) {
+				console.error("Gagal Logout:", error);
+			}
+		}
+	</script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- PENGATURAN TITLE TAB BROWSER BARU -->
     <title>AnimeOvertime - Disaat Kamu Mau Nonton Anime Tapi Malah Disuruh Overtime</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
@@ -13,7 +99,6 @@
         .custom-scroll::-webkit-scrollbar-track { background: #1f2937; border-radius: 4px; }
         .custom-scroll::-webkit-scrollbar-thumb { background: #4f46e5; border-radius: 4px; }
         
-        /* Gaya Khusus Switch Toggle Button */
         .toggle-dot { transition: transform 0.2s ease-in-out; }
         input:checked ~ .toggle-bg { background-color: #4f46e5; }
         input:checked ~ .toggle-dot { transform: translateX(100%); }
@@ -23,13 +108,11 @@
 
     <!-- NAVBAR -->
     <nav class="bg-gray-900 border-b border-gray-800 sticky top-0 z-40 px-6 py-4 flex flex-col xl:flex-row items-center justify-between gap-4">
-        <!-- TITLE DI HALAMAN UTAMA (LOGO TEXT BARU) -->
         <div class="flex flex-col">
             <a href="#" onclick="initSeasonal()" class="text-2xl font-black text-indigo-500 tracking-wider leading-none">ANIME<span class="text-white">OVERTIME</span></a>
             <span class="text-[10px] text-gray-500 font-medium mt-1 tracking-wide hidden sm:inline">Disaat Kamu Mau Nonton Anime Tapi Malah Disuruh Overtime</span>
         </div>
         
-        <!-- FILTER ACTIONS -->
         <div class="flex flex-wrap items-center gap-3 w-full xl:w-auto justify-end">
             <select id="seasonSelect" onchange="applyFilters()" class="bg-gray-800 text-white px-3 py-2 rounded-lg border border-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm cursor-pointer">
                 <option value="WINTER">Winter</option>
@@ -209,7 +292,7 @@
         let currentAnimeData = [];
         let allFetchedAnimeMap = new Map();
         let currentTitlePref = localStorage.getItem('animeTitlePref') || 'english';
-        let currentUser = JSON.parse(localStorage.getItem('currentAnimeUser')) || null;
+        // PERBAIKAN: Hapus let currentUser lokal untuk beralih menggunakan window.currentUser secara konsisten
         let authMode = 'login';
         let selectedAnimeId = null;
         let countdownInterval = null;
@@ -276,21 +359,6 @@
             else if (modalId === 'authModal') closeAuthModal();
         }
 
-        function updateAuthNavbar() {
-            const container = document.getElementById('authNavContainer');
-            if (currentUser) {
-                container.innerHTML = `
-                    <span class="text-xs text-gray-400 mr-1">Halo, <b class="text-indigo-400">${currentUser}</b></span>
-                    <button onclick="handleLogout()" class="bg-red-950/50 hover:bg-red-900 border border-red-900/50 text-red-400 text-xs px-2.5 py-1.5 rounded-lg transition font-medium cursor-pointer">Keluar</button>
-                `;
-            } else {
-                container.innerHTML = `
-                    <button onclick="openAuthModal('login')" class="bg-gray-800 hover:bg-gray-700 text-white text-xs px-3 py-1.5 rounded-lg transition font-medium border border-gray-700 cursor-pointer">Masuk</button>
-                `;
-            }
-            renderWatchlistUI();
-        }
-
         function openAuthModal(mode) {
             authMode = mode;
             document.getElementById('authModal').classList.remove('hidden');
@@ -329,58 +397,63 @@
             }
         }
 
-        function handleAuthSubmit(e) {
-            e.preventDefault();
-            const user = document.getElementById('authUsername').value.trim();
-            const pass = document.getElementById('authPassword').value;
-            
-            const saveUserChecked = document.getElementById('toggleSaveUser').checked;
-            const savePassChecked = document.getElementById('toggleSavePass').checked;
-            
-            let db = JSON.parse(localStorage.getItem('animeUsersDB')) || {};
+        async function handleAuthSubmit(e) {
+			e.preventDefault();
+			
+			const usernameInput = document.getElementById('authUsername').value.trim();
+			const pass = document.getElementById('authPassword').value;
+			const emailFormat = `${usernameInput}@animeovertime.com`;
+			
+			const { auth, signInWithEmailAndPassword, createUserWithEmailAndPassword } = window.authService;
+			const saveUserChecked = document.getElementById('toggleSaveUser').checked;
+			const savePassChecked = document.getElementById('toggleSavePass').checked;
 
-            if (authMode === 'register') {
-                if (db[user]) { showToast("Username sudah terpakai!", "error"); return; }
-                db[user] = { password: pass, watched: {}, watchlist: {} };
-                localStorage.setItem('animeUsersDB', JSON.stringify(db));
-                showToast("Registrasi berhasil! Silakan masuk.");
-                switchAuthMode('login');
-            } else {
-                if (!db[user] || db[user].password !== pass) { showToast("Username atau password salah!", "error"); return; }
-                
-                if (saveUserChecked) localStorage.setItem('savedAnimeUsername', user);
-                else localStorage.removeItem('savedAnimeUsername');
+			try {
+				if (authMode === 'register') {
+					await createUserWithEmailAndPassword(auth, emailFormat, pass);
+					showToast("Registrasi berhasil! Otomatis masuk.");
+					closeAuthModal();
+				} else {
+					await signInWithEmailAndPassword(auth, emailFormat, pass);
+					
+					if (saveUserChecked) localStorage.setItem('savedAnimeUsername', usernameInput);
+					else localStorage.removeItem('savedAnimeUsername');
 
-                if (savePassChecked) localStorage.setItem('savedAnimePassword', pass);
-                else localStorage.removeItem('savedAnimePassword');
+					if (savePassChecked) localStorage.setItem('savedAnimePassword', pass);
+					else localStorage.removeItem('savedAnimePassword');
 
-                currentUser = user;
-                localStorage.setItem('currentAnimeUser', JSON.stringify(user));
-                updateAuthNavbar();
-                closeAuthModal();
-                showToast(`Selamat datang kembali, ${user}!`, "success");
-                const activeAnime = allFetchedAnimeMap.get(selectedAnimeId);
-                if (activeAnime) openModal(activeAnime);
-            }
-        }
-
-        function handleLogout() {
-            showToast(`Sampai jumpa, ${currentUser}!`, "info");
-            currentUser = null;
-            localStorage.removeItem('currentAnimeUser');
-            updateAuthNavbar();
-            const activeAnime = allFetchedAnimeMap.get(selectedAnimeId);
-            if (activeAnime) openModal(activeAnime);
-        }
+					showToast(`Selamat datang kembali, ${usernameInput}!`, "success");
+					closeAuthModal();
+				}
+				
+				document.getElementById('authForm').reset();
+				
+			} catch (error) {
+				console.error("Firebase Auth Error:", error);
+				
+				let friendlyMessage = "Gagal masuk/daftar.";
+				if (error.code === 'auth/wrong-password' || error.code === 'auth/user-not-found' || error.code === 'auth/invalid-credential') {
+					friendlyMessage = "Username atau password salah!";
+				} else if (error.code === 'auth/email-already-in-use') {
+					friendlyMessage = "Username sudah terpakai!";
+				} else if (error.code === 'auth/weak-password') {
+					friendlyMessage = "Password terlalu lemah (minimal 6 karakter).";
+				} else {
+					friendlyMessage = error.message;
+				}
+				
+				showToast(friendlyMessage, "error");
+			}
+		}
 
         function getWatchlistKey() { return `${seasonSelect.value}-${yearSelect.value}`; }
 
         function renderWatchlistUI() {
             watchlistGrid.innerHTML = '';
-            if (!currentUser) { watchlistSection.classList.add('hidden'); return; }
+            // PERBAIKAN: Membaca window.currentUser global
+            if (!window.currentUser) { watchlistSection.classList.add('hidden'); return; }
 
-            const db = JSON.parse(localStorage.getItem('animeUsersDB')) || {};
-            const userWatchlist = db[currentUser]?.watchlist?.[getWatchlistKey()] || [];
+            const userWatchlist = window.allUserCloudData?.watchlist?.[getWatchlistKey()] || [];
 
             if (userWatchlist.length === 0) { watchlistSection.classList.add('hidden'); return; }
 
@@ -412,34 +485,45 @@
             });
         }
 
-        function toggleWatchlist(anime) {
-            if (!currentUser) { openAuthModal('login'); return; }
+        async function toggleWatchlist(anime) {
+            // PERBAIKAN: Membaca window.currentUser global
+            if (!window.currentUser) { openAuthModal('login'); return; }
+			
+			const { db, doc, setDoc } = window.authService;
+			const key = getWatchlistKey();
+			
+			let userWatchlist = window.allUserCloudData?.watchlist?.[key] || [];
+			const index = userWatchlist.indexOf(anime.id);
 
-            let db = JSON.parse(localStorage.getItem('animeUsersDB')) || {};
-            if (!db[currentUser].watchlist) db[currentUser].watchlist = {};
-            const key = getWatchlistKey();
-            if (!db[currentUser].watchlist[key]) db[currentUser].watchlist[key] = [];
+			if (index > -1) {
+				userWatchlist.splice(index, 1);
+				showToast("Dihapus dari Watchlist");
+			} else {
+				userWatchlist.push(anime.id);
+				showToast("Ditambahkan ke Watchlist");
+			}
 
-            let list = db[currentUser].watchlist[key];
-            const index = list.indexOf(anime.id);
+			if (!window.allUserCloudData) window.allUserCloudData = {};
+			if (!window.allUserCloudData.watchlist) window.allUserCloudData.watchlist = {};
+			window.allUserCloudData.watchlist[key] = userWatchlist;
 
-            if (index > -1) { list.splice(index, 1); showToast("Dihapus dari Watchlist"); }
-            else { list.push(anime.id); showToast("Ditambahkan ke Watchlist"); }
+			const userDocRef = doc(db, "users", window.firebaseCurrentUserUid);
+			await setDoc(userDocRef, {
+				watchlist: { [key]: userWatchlist }
+			}, { merge: true });
 
-            db[currentUser].watchlist[key] = list;
-            localStorage.setItem('animeUsersDB', JSON.stringify(db));
             updateWatchlistBtnStyle(anime);
-            renderWatchlistUI();
-        }
+			renderWatchlistUI();
+		}
 
         function renderEpisodeTracker(anime) {
             const container = document.getElementById('episodeTrackerContainer');
             container.innerHTML = '';
             const totalEpisodes = anime.episodes || 12;
             let userWatchedData = {};
-            if (currentUser) {
-                const db = JSON.parse(localStorage.getItem('animeUsersDB')) || {};
-                userWatchedData = db[currentUser]?.watched?.[anime.id] || {};
+            // PERBAIKAN: Membaca window.currentUser global
+            if (window.currentUser) {
+                userWatchedData = window.allUserCloudData?.watched?.[anime.id] || {};
             }
 
             for (let i = 1; i <= totalEpisodes; i++) {
@@ -447,37 +531,45 @@
                 const isWatched = userWatchedData[i] === true;
                 btn.innerText = `Eps ${i}`;
                 
-                if (isWatched && currentUser) btn.className = "bg-green-600 hover:bg-green-700 text-white text-xs font-bold py-2 rounded border border-green-500 shadow-md transition cursor-pointer";
+                if (isWatched && window.currentUser) btn.className = "bg-green-600 hover:bg-green-700 text-white text-xs font-bold py-2 rounded border border-green-500 shadow-md transition cursor-pointer";
                 else btn.className = "bg-gray-800 hover:bg-gray-700 text-gray-300 text-xs py-2 rounded border border-gray-700 transition cursor-pointer";
 
                 btn.onclick = () => {
-                    if (!currentUser) { openAuthModal('login'); return; }
+                    if (!window.currentUser) { openAuthModal('login'); return; }
                     toggleEpisodeWatched(anime.id, i, isWatched, anime);
                 };
                 container.appendChild(btn);
             }
         }
 
-        function toggleEpisodeWatched(animeId, episodeNum, currentStatus, anime) {
-            let db = JSON.parse(localStorage.getItem('animeUsersDB')) || {};
-            if (!db[currentUser].watched[animeId]) db[currentUser].watched[animeId] = {};
-            db[currentUser].watched[animeId][episodeNum] = !currentStatus;
-            localStorage.setItem('animeUsersDB', JSON.stringify(db));
+        async function toggleEpisodeWatched(animeId, episodeNum, currentStatus, anime) {
+            const { db, doc, setDoc } = window.authService;
+            if (!window.allUserCloudData) window.allUserCloudData = {};
+            if (!window.allUserCloudData.watched) window.allUserCloudData.watched = {};
+            if (!window.allUserCloudData.watched[animeId]) window.allUserCloudData.watched[animeId] = {};
+            
+            window.allUserCloudData.watched[animeId][episodeNum] = !currentStatus;
             
             if(!currentStatus) showToast(`Tandai Episode ${episodeNum} ditonton`);
             else showToast(`Batal tandai Episode ${episodeNum}`);
+
+            const userDocRef = doc(db, "users", window.firebaseCurrentUserUid);
+			await setDoc(userDocRef, {
+				watched: { [animeId]: { [episodeNum]: !currentStatus } }
+			}, { merge: true });
+
             renderEpisodeTracker(anime);
         }
 
         function updateWatchlistBtnStyle(anime) {
             const btn = document.getElementById('modalWatchlistBtn');
-            if (!currentUser) {
+            // PERBAIKAN: Membaca window.currentUser global
+            if (!window.currentUser) {
                 btn.innerText = "+ Watchlist";
                 btn.className = "shrink-0 text-xs bg-gray-800 hover:bg-gray-700 text-gray-300 px-3 py-1.5 rounded-lg border border-gray-700 font-semibold cursor-pointer";
                 return;
             }
-            const db = JSON.parse(localStorage.getItem('animeUsersDB')) || {};
-            const list = db[currentUser]?.watchlist?.[getWatchlistKey()] || [];
+            const list = window.allUserCloudData?.watchlist?.[getWatchlistKey()] || [];
             if (list.includes(anime.id)) {
                 btn.innerHTML = "✓ Saved";
                 btn.className = "shrink-0 text-xs bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-lg border border-emerald-500 font-bold cursor-pointer shadow-md";
@@ -581,11 +673,12 @@
             } catch (error) {
                 console.error(error);
                 animeGrid.innerHTML = `<p class="text-red-500 col-span-full text-center">Gagal memuat data.</p>`;
-            } finally { loading.classList.remove('flex'); loading.classList.add('hidden'); }
+            } finally { // PERBAIKAN: Memperbaiki kesalahan penulisan kata kunci 'finally'
+                loading.classList.remove('flex'); loading.classList.add('hidden'); 
+            }
         }
         function getAnimeTitle(anime) { return currentTitlePref === 'english' ? (anime.title.english || anime.title.romaji) : (anime.title.romaji || anime.title.english); }
 
-        // --- MANAJEMEN FIX: PERBAIKAN TIMEOUT CRASH ---
         function displayAnime(animeList) {
             animeGrid.innerHTML = ''; if (!animeList || animeList.length === 0) return;
             animeList.forEach(anime => {
