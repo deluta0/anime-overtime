@@ -107,43 +107,44 @@
 <body class="font-sans antialiased">
 
     <!-- NAVBAR -->
-    <nav class="bg-gray-900 border-b border-gray-800 sticky top-0 z-40 px-6 py-4 flex flex-col xl:flex-row items-center justify-between gap-4">
-        <div class="flex flex-col">
+    <nav class="bg-gray-900 border-b border-gray-800 sticky top-0 z-40 px-4 sm:px-6 py-4 flex flex-col xl:flex-row items-center justify-between gap-4">
+        <div class="flex flex-col items-center xl:items-start text-center xl:text-left">
             <a href="#" onclick="initSeasonal()" class="text-2xl font-black text-indigo-500 tracking-wider leading-none">ANIME<span class="text-white">OVERTIME</span></a>
             <span class="text-[10px] text-gray-500 font-medium mt-1 tracking-wide hidden sm:inline">Disaat Kamu Mau Nonton Anime Tapi Malah Disuruh Overtime</span>
         </div>
         
-        <div class="flex flex-wrap items-center gap-3 w-full xl:w-auto justify-end">
-            <select id="seasonSelect" onchange="applyFilters()" class="bg-gray-800 text-white px-3 py-2 rounded-lg border border-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm cursor-pointer">
+        <div class="flex flex-wrap items-center gap-2 sm:gap-3 w-full xl:w-auto justify-center sm:justify-end">
+            <select id="seasonSelect" onchange="applyFilters()" class="bg-gray-800 text-white px-2.5 sm:px-3 py-2 rounded-lg border border-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-xs sm:text-sm cursor-pointer flex-1 sm:flex-initial">
                 <option value="WINTER">Winter</option>
                 <option value="SPRING">Spring</option>
                 <option value="SUMMER">Summer</option>
                 <option value="FALL">Fall</option>
             </select>
             
-            <select id="yearSelect" onchange="applyFilters()" class="bg-gray-800 text-white px-3 py-2 rounded-lg border border-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm cursor-pointer"></select>
+            <select id="yearSelect" onchange="applyFilters()" class="bg-gray-800 text-white px-2.5 sm:px-3 py-2 rounded-lg border border-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-xs sm:text-sm cursor-pointer flex-1 sm:flex-initial"></select>
             
-            <select id="sortSelect" onchange="applyFilters()" class="bg-gray-800 text-white px-3 py-2 rounded-lg border border-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm cursor-pointer">
+            <select id="sortSelect" onchange="applyFilters()" class="bg-gray-800 text-white px-2.5 sm:px-3 py-2 rounded-lg border border-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-xs sm:text-sm cursor-pointer w-full sm:w-auto">
                 <option value="POPULARITY_DESC">Paling Populer</option>
                 <option value="SCORE_DESC">Skor Tertinggi</option>
                 <option value="AIRING_AT">Jadwal Tayang Terdekat ⏱️</option>
             </select>
 
-            <button onclick="toggleSettingsMenu()" class="bg-gray-800 hover:bg-gray-700 text-white p-2 rounded-lg border border-gray-700 transition text-sm">⚙️</button>
-
-            <!-- AUTH BUTTON CONTAINER -->
-            <div id="authNavContainer" class="border-l border-gray-800 pl-3 flex items-center gap-2"></div>
+            <div class="flex items-center gap-2 justify-between w-full sm:w-auto mt-1 sm:mt-0">
+                <button onclick="toggleSettingsMenu()" class="bg-gray-800 hover:bg-gray-700 text-white p-2 rounded-lg border border-gray-700 transition text-xs sm:text-sm shadow-sm">⚙️</button>
+                <!-- AUTH BUTTON CONTAINER -->
+                <div id="authNavContainer" class="border-l border-gray-800 pl-2 sm:pl-3 flex items-center gap-2"></div>
+            </div>
         </div>
     </nav>
 
     <!-- TOAST NOTIFICATION -->
-    <div id="toastContainer" class="fixed bottom-6 right-6 z-70 flex flex-col gap-3 max-w-sm w-full pointer-events-none"></div>
+    <div id="toastContainer" class="fixed bottom-4 right-4 left-4 sm:left-auto sm:bottom-6 sm:right-6 z-70 flex flex-col gap-3 max-w-sm w-full pointer-events-none"></div>
 
     <!-- SETTINGS PANEL -->
-    <div id="settingsPanel" class="fixed top-20 right-6 bg-gray-900 border border-gray-800 shadow-2xl rounded-xl p-4 w-72 hidden z-50">
+    <div id="settingsPanel" class="fixed top-36 sm:top-20 right-4 left-4 sm:left-auto bg-gray-900 border border-gray-800 shadow-2xl rounded-xl p-4 sm:w-72 hidden z-50">
         <h4 class="font-bold text-gray-200 mb-3 border-b border-gray-800 pb-2 flex justify-between items-center">
             <span>Opsi Tampilan</span>
-            <button onclick="toggleSettingsMenu()" class="text-gray-500 hover:text-white">&times;</button>
+            <button onclick="toggleSettingsMenu()" class="text-gray-500 hover:text-white text-xl">&times;</button>
         </h4>
         <label class="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Bahasa Judul</label>
         <div class="space-y-2">
@@ -160,7 +161,7 @@
 
     <!-- MODAL AUTH -->
     <div id="authModal" onclick="handleOutsideClick(event, 'authModal')" class="fixed inset-0 bg-black/85 hidden z-60 items-center justify-center p-4 backdrop-blur-sm">
-        <div onclick="event.stopPropagation()" class="bg-gray-900 border border-gray-800 rounded-xl p-6 w-full max-w-md relative shadow-2xl">
+        <div onclick="event.stopPropagation()" class="bg-gray-900 border border-gray-800 rounded-xl p-5 sm:p-6 w-full max-w-md relative shadow-2xl">
             <button onclick="closeAuthModal()" class="absolute top-3 right-3 text-gray-400 hover:text-white text-xl">&times;</button>
             <h3 id="authModalTitle" class="text-xl font-bold text-white mb-4">Masuk Akun</h3>
             
@@ -197,7 +198,7 @@
                     <input type="password" id="authPassword" required class="w-full bg-gray-800 text-white px-3 py-2 rounded-lg border border-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm">
                 </div>
 
-                <button type="submit" id="authSubmitBtn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 rounded-lg transition text-sm cursor-pointer mt-2">Masuk</button>
+                <button type="submit" id="authSubmitBtn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 rounded-lg transition text-sm cursor-pointer mt-2 shadow-md">Masuk</button>
             </form>
             <p class="text-xs text-gray-400 mt-4 text-center">
                 <span id="authSwitchText">Belum punya akun?</span>
@@ -207,18 +208,18 @@
     </div>
 
     <!-- MAIN CONTENT -->
-    <main class="max-w-7xl mx-auto px-6 py-8">
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 py-8">
         <!-- WATCHLIST SECTION -->
         <div id="watchlistSection" class="mb-10 hidden">
-            <h2 class="text-2xl font-bold mb-6 border-l-4 border-emerald-500 pl-3 flex items-center gap-2">
+            <h2 class="text-xl sm:text-2xl font-bold mb-4 sm:mb-6 border-l-4 border-emerald-500 pl-3 flex items-center gap-2">
                 Watchlist Saya <span class="text-xs bg-emerald-950 text-emerald-400 border border-emerald-900 px-2 py-0.5 rounded-full font-normal" id="watchlistCount">0</span>
             </h2>
-            <div id="watchlistGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6 bg-gray-900/30 p-4 rounded-xl border border-gray-800/50"></div>
+            <div id="watchlistGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 sm:gap-6 bg-gray-900/30 p-3 sm:p-4 rounded-xl border border-gray-800/50"></div>
             <hr class="border-gray-800 mt-10">
         </div>
 
         <!-- SECTION DAFTAR MUSIM -->
-        <h2 id="sectionTitle" class="text-2xl font-bold mb-6 border-l-4 border-indigo-500 pl-3">Memuat Data...</h2>
+        <h2 id="sectionTitle" class="text-xl sm:text-2xl font-bold mb-4 sm:mb-6 border-l-4 border-indigo-500 pl-3">Memuat Data...</h2>
         
         <!-- LOADING SCREEN -->
         <div id="loading" class="flex flex-col items-center justify-center py-20 gap-3">
@@ -226,49 +227,55 @@
             <div class="text-sm text-gray-400 font-medium tracking-wide">Memuat database..</div>
         </div>
 
-        <div id="animeGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6"></div>
+        <div id="animeGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 sm:gap-6"></div>
     </main>
 
     <!-- MODAL DETAIL -->
     <div id="animeModal" onclick="handleOutsideClick(event, 'animeModal')" class="fixed inset-0 bg-black/80 hidden z-50 items-center justify-center p-4 backdrop-blur-sm">
-        <div onclick="event.stopPropagation()" class="bg-gray-900 border border-gray-800 rounded-xl max-w-2xl w-full overflow-hidden relative flex flex-col md:flex-row max-h-[90vh] overflow-y-auto md:overflow-visible shadow-2xl">
-            <button onclick="closeModal()" class="absolute top-3 right-3 bg-gray-800 text-white w-8 h-8 rounded-full flex items-center justify-center hover:bg-gray-700 z-20 shadow-md">&times;</button>
+        <!-- PERBAIKAN RESPONSIVE: Menggunakan flex-col untuk HP (poster di atas) dan md:flex-row untuk Desktop -->
+        <div onclick="event.stopPropagation()" class="bg-gray-900 border border-gray-800 rounded-xl max-w-2xl w-full overflow-hidden relative flex flex-col md:flex-row max-h-[85vh] md:max-h-[90vh] overflow-y-auto shadow-2xl custom-scroll">
             
-            <img id="modalImg" class="w-full md:w-56 h-auto object-cover bg-gray-900" src="" alt="Poster">
+            <!-- Tombol Close Melayang Yang Kokoh -->
+            <button onclick="closeModal()" class="absolute top-3 right-3 bg-gray-800/80 backdrop-blur-md text-white w-8 h-8 rounded-full flex items-center justify-center hover:bg-gray-700 z-20 shadow-md border border-gray-700 text-lg">&times;</button>
             
-            <div class="p-6 flex flex-col justify-between flex-1 min-w-0">
-                <div class="overflow-y-auto custom-scroll pr-1 flex-1">
-                    <div class="flex flex-col sm:flex-row justify-between items-start gap-3 mb-2 pr-12">
-                        <h3 id="modalTitle" class="text-2xl font-bold text-white tracking-tight leading-tight"></h3>
-                        <button id="modalWatchlistBtn" class="shrink-0 text-xs px-3 py-1.5 rounded-lg border font-semibold transition shadow-sm cursor-pointer whitespace-nowrap"></button>
+            <!-- Poster: w-full & h-64 di HP agar proporsional, md:w-56 & h-auto di Desktop -->
+            <img id="modalImg" class="w-full md:w-56 h-64 md:h-auto object-cover bg-gray-900 shrink-0 shadow-md md:shadow-none" src="" alt="Poster">
+            
+            <div class="p-4 sm:p-6 flex flex-col justify-between flex-1 min-w-0 bg-gray-900">
+                <div class="flex-1">
+                    <!-- Judul & Tombol Watchlist dengan jarak pr-12 aman dari tombol close melayang -->
+                    <div class="flex flex-col sm:flex-row justify-between items-start gap-2 mb-2 pr-12 sm:pr-0">
+                        <h3 id="modalTitle" class="text-xl sm:text-2xl font-bold text-white tracking-tight leading-tight"></h3>
+                        <button id="modalWatchlistBtn" class="shrink-0 text-[11px] sm:text-xs px-2.5 py-1.5 rounded-lg border font-semibold transition shadow-sm cursor-pointer whitespace-nowrap mt-1 sm:mt-0"></button>
                     </div>
-                    <h4 id="modalSubTitle" class="text-sm text-gray-500 mb-3 italic"></h4>
+                    <h4 id="modalSubTitle" class="text-xs sm:text-sm text-gray-500 mb-3 italic"></h4>
                     
-                    <div class="flex flex-wrap gap-3 text-sm text-gray-400 mb-4">
+                    <div class="flex flex-wrap gap-2 text-xs sm:text-sm text-gray-400 mb-4">
                         <span id="modalRating" class="text-yellow-400 font-semibold"></span>
                         <span id="modalType"></span>
                         <span id="modalEpisodes"></span>
-                        <span id="modalStatus" class="px-2 py-0.5 rounded text-xs font-bold"></span>
+                        <span id="modalStatus" class="px-2 py-0.5 rounded text-[10px] font-bold"></span>
                     </div>
 
                     <!-- CARD JADWAL & COUNTDOWN -->
-                    <div id="airingScheduleCard" class="bg-indigo-950/40 border border-indigo-900/50 rounded-lg p-3 mb-4 hidden">
-                        <div class="text-xs text-indigo-400 font-bold uppercase tracking-wide">Jadwal Tayang Episode Berikutnya</div>
-                        <div id="airingTimeInfo" class="text-sm text-gray-200 font-semibold mt-1"></div>
-                        <div id="airingCountdown" class="text-xs text-amber-400 font-medium mt-1"></div>
+                    <div id="airingScheduleCard" class="bg-indigo-950/40 border border-indigo-900/50 rounded-lg p-3 mb-4 hidden shadow-inner">
+                        <div class="text-[10px] text-indigo-400 font-bold uppercase tracking-wide">Jadwal Tayang Episode Berikutnya</div>
+                        <div id="airingTimeInfo" class="text-xs sm:text-sm text-gray-200 font-semibold mt-1"></div>
+                        <div id="airingCountdown" class="text-[11px] text-amber-400 font-medium mt-1"></div>
                     </div>
 
                     <!-- EPISODE TRACKER -->
                     <div class="mb-4">
-                        <div class="text-xs text-indigo-400 font-bold uppercase tracking-wide mb-2">Daftar Episode & Progress Nonton</div>
-                        <div id="episodeTrackerContainer" class="grid grid-cols-4 sm:grid-cols-6 gap-2 max-h-40 overflow-y-auto p-2 bg-gray-950/50 rounded-lg border border-gray-800 custom-scroll"></div>
+                        <div class="text-[10px] text-indigo-400 font-bold uppercase tracking-wide mb-2">Daftar Episode & Progress Nonton</div>
+                        <!-- Grid episode disesuaikan menjadi 4 kolom di layar kecil agar tidak terpotong -->
+                        <div id="episodeTrackerContainer" class="grid grid-cols-4 sm:grid-cols-6 gap-2 max-h-36 overflow-y-auto p-2 bg-gray-950/50 rounded-lg border border-gray-800 custom-scroll"></div>
                     </div>
 
                     <div id="modalGenres" class="flex flex-wrap gap-1.5 mb-4"></div>
-                    <p id="modalSynopsis" class="text-gray-300 text-sm leading-relaxed mb-4 max-h-32 overflow-y-auto custom-scroll pr-2"></p>
+                    <p id="modalSynopsis" class="text-gray-300 text-xs sm:text-sm leading-relaxed mb-4 max-h-28 overflow-y-auto custom-scroll pr-2"></p>
                 </div>
-                <div class="mt-4 pt-4 border-t border-gray-800">
-                    <a id="watchBtn" target="_blank" class="block w-full text-center bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded-lg transition text-sm shadow-lg shadow-red-600/20">
+                <div class="mt-2 pt-3 border-t border-gray-800">
+                    <a id="watchBtn" target="_blank" class="block w-full text-center bg-red-600 hover:bg-red-700 text-white font-bold py-2.5 sm:py-3 rounded-lg transition text-xs sm:text-sm shadow-lg shadow-red-600/20">
                         Tonton Trailer Resmi di YouTube
                     </a>
                 </div>
@@ -292,7 +299,6 @@
         let currentAnimeData = [];
         let allFetchedAnimeMap = new Map();
         let currentTitlePref = localStorage.getItem('animeTitlePref') || 'english';
-        // PERBAIKAN: Hapus let currentUser lokal untuk beralih menggunakan window.currentUser secara konsisten
         let authMode = 'login';
         let selectedAnimeId = null;
         let countdownInterval = null;
@@ -450,7 +456,6 @@
 
         function renderWatchlistUI() {
             watchlistGrid.innerHTML = '';
-            // PERBAIKAN: Membaca window.currentUser global
             if (!window.currentUser) { watchlistSection.classList.add('hidden'); return; }
 
             const userWatchlist = window.allUserCloudData?.watchlist?.[getWatchlistKey()] || [];
@@ -475,9 +480,9 @@
                         <div class="absolute top-2 left-2 bg-emerald-950/90 text-emerald-400 px-2 py-0.5 rounded text-[10px] font-black border border-emerald-800">Watchlist</div>
                         <div class="absolute bottom-2 left-2 bg-black/70 px-2 py-0.5 rounded text-xs text-yellow-400 font-bold">${score}</div>
                     </div>
-                    <div class="p-4 flex-1 flex flex-col justify-between">
-                        <h4 class="font-bold text-sm text-gray-200 line-clamp-2 group-hover:text-emerald-400 transition">${title}</h4>
-                        <p class="text-xs text-gray-500 mt-1">${anime.format || 'TV'} (${anime.episodes || '?'} Eps)</p>
+                    <div class="p-3 sm:p-4 flex-1 flex flex-col justify-between">
+                        <h4 class="font-bold text-xs sm:text-sm text-gray-200 line-clamp-2 group-hover:text-emerald-400 transition">${title}</h4>
+                        <p class="text-[10px] sm:text-xs text-gray-500 mt-1">${anime.format || 'TV'} (${anime.episodes || '?'} Eps)</p>
                     </div>
                 `;
                 card.onclick = () => openModal(anime);
@@ -486,7 +491,6 @@
         }
 
         async function toggleWatchlist(anime) {
-            // PERBAIKAN: Membaca window.currentUser global
             if (!window.currentUser) { openAuthModal('login'); return; }
 			
 			const { db, doc, setDoc } = window.authService;
@@ -521,7 +525,6 @@
             container.innerHTML = '';
             const totalEpisodes = anime.episodes || 12;
             let userWatchedData = {};
-            // PERBAIKAN: Membaca window.currentUser global
             if (window.currentUser) {
                 userWatchedData = window.allUserCloudData?.watched?.[anime.id] || {};
             }
@@ -531,8 +534,8 @@
                 const isWatched = userWatchedData[i] === true;
                 btn.innerText = `Eps ${i}`;
                 
-                if (isWatched && window.currentUser) btn.className = "bg-green-600 hover:bg-green-700 text-white text-xs font-bold py-2 rounded border border-green-500 shadow-md transition cursor-pointer";
-                else btn.className = "bg-gray-800 hover:bg-gray-700 text-gray-300 text-xs py-2 rounded border border-gray-700 transition cursor-pointer";
+                if (isWatched && window.currentUser) btn.className = "bg-green-600 hover:bg-green-700 text-white text-[10px] sm:text-xs font-bold py-2 rounded border border-green-500 shadow-sm transition cursor-pointer";
+                else btn.className = "bg-gray-800 hover:bg-gray-700 text-gray-300 text-[10px] sm:text-xs py-2 rounded border border-gray-700 transition cursor-pointer";
 
                 btn.onclick = () => {
                     if (!window.currentUser) { openAuthModal('login'); return; }
@@ -563,19 +566,18 @@
 
         function updateWatchlistBtnStyle(anime) {
             const btn = document.getElementById('modalWatchlistBtn');
-            // PERBAIKAN: Membaca window.currentUser global
             if (!window.currentUser) {
                 btn.innerText = "+ Watchlist";
-                btn.className = "shrink-0 text-xs bg-gray-800 hover:bg-gray-700 text-gray-300 px-3 py-1.5 rounded-lg border border-gray-700 font-semibold cursor-pointer";
+                btn.className = "shrink-0 text-[10px] sm:text-xs bg-gray-800 hover:bg-gray-700 text-gray-300 px-2.5 py-1.5 rounded-lg border border-gray-700 font-semibold cursor-pointer";
                 return;
             }
             const list = window.allUserCloudData?.watchlist?.[getWatchlistKey()] || [];
             if (list.includes(anime.id)) {
                 btn.innerHTML = "✓ Saved";
-                btn.className = "shrink-0 text-xs bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-lg border border-emerald-500 font-bold cursor-pointer shadow-md";
+                btn.className = "shrink-0 text-[10px] sm:text-xs bg-emerald-600 hover:bg-emerald-700 text-white px-2.5 py-1.5 rounded-lg border border-emerald-500 font-bold cursor-pointer shadow-md";
             } else {
                 btn.innerText = "+ Watchlist";
-                btn.className = "shrink-0 text-xs bg-gray-850 hover:bg-gray-800 text-gray-300 px-3 py-1.5 rounded-lg border border-gray-700 font-semibold cursor-pointer";
+                btn.className = "shrink-0 text-[10px] sm:text-xs bg-gray-850 hover:bg-gray-800 text-gray-300 px-2.5 py-1.5 rounded-lg border border-gray-700 font-semibold cursor-pointer";
             }
         }
 
@@ -673,7 +675,7 @@
             } catch (error) {
                 console.error(error);
                 animeGrid.innerHTML = `<p class="text-red-500 col-span-full text-center">Gagal memuat data.</p>`;
-            } finally { // PERBAIKAN: Memperbaiki kesalahan penulisan kata kunci 'finally'
+            } finally { 
                 loading.classList.remove('flex'); loading.classList.add('hidden'); 
             }
         }
@@ -693,9 +695,9 @@
                         <div class="absolute top-2 left-2 bg-black/70 px-2 py-0.5 rounded text-xs text-yellow-400 font-bold">${score}</div>
                         ${airingBadge}
                     </div>
-                    <div class="p-4 flex-1 flex flex-col justify-between">
-                        <h4 class="font-bold text-sm text-gray-200 line-clamp-2 group-hover:text-indigo-400 transition">${title}</h4>
-                        <p class="text-xs text-gray-500 mt-1">${anime.format || 'TV'} (${anime.episodes || '?'} Eps)</p>
+                    <div class="p-3 sm:p-4 flex-1 flex flex-col justify-between">
+                        <h4 class="font-bold text-xs sm:text-sm text-gray-200 line-clamp-2 group-hover:text-indigo-400 transition">${title}</h4>
+                        <p class="text-[10px] sm:text-xs text-gray-500 mt-1">${anime.format || 'TV'} (${anime.episodes || '?'} Eps)</p>
                     </div>
                 `;
                 card.onclick = () => openModal(anime); animeGrid.appendChild(card);
@@ -719,11 +721,11 @@
             renderEpisodeTracker(anime);
             const statusBadge = document.getElementById('modalStatus');
             statusBadge.innerText = anime.status;
-            statusBadge.className = `px-2 py-0.5 rounded text-xs font-bold ${anime.status === 'FINISHED' ? 'bg-green-900/50 text-green-400' : 'bg-blue-900/50 text-blue-400'}`;
+            statusBadge.className = `px-2 py-0.5 rounded text-[10px] font-bold ${anime.status === 'FINISHED' ? 'bg-green-900/50 text-green-400' : 'bg-blue-900/50 text-blue-400'}`;
 
             const genreContainer = document.getElementById('modalGenres'); genreContainer.innerHTML = '';
             anime.genres.slice(0, 3).forEach(genre => {
-                genreContainer.innerHTML += `<span class="text-xs bg-indigo-950/60 text-indigo-400 border border-indigo-900/50 px-2 py-0.5 rounded-full">${genre}</span>`;
+                genreContainer.innerHTML += `<span class="text-[10px] bg-indigo-950/60 text-indigo-400 border border-indigo-900/50 px-2 py-0.5 rounded-full">${genre}</span>`;
             });
             document.getElementById('modalSynopsis').innerText = anime.description ? anime.description.replace(/<\/?[^>]+(>|$)/g, "") : 'Sinopsis tidak tersedia.';
             
