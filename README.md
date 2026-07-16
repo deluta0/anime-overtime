@@ -12,6 +12,3 @@
 * HTML5, Tailwind CSS v4 (CDN)
 * AniList API (Data Anime)
 * Firebase Firestore & Auth (Database & Login)
-
-## 🚀 Cara Pakai
-Cukup buka file `index.html` langsung di browser atau via **Live Server** di VS Code. Tidak perlu install `npm`.
